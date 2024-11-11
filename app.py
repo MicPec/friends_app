@@ -1,50 +1,59 @@
 import json
+from pathlib import Path
+
+import pandas as pd  
+import plotly.express as px  
 import streamlit as st
-import pandas as pd  # type: ignore
-from pycaret.clustering import load_model, predict_model  # type: ignore
-import plotly.express as px  # type: ignore
+from pycaret.clustering import load_model, predict_model  
 
-MODEL_NAME = 'welcome_survey_clustering_pipeline_v2'
+PATH = Path(".")
 
-DATA = 'welcome_survey_simple_v2.csv'
+MODEL_NAME = "welcome_survey_clustering_pipeline_v2"
 
-CLUSTER_NAMES_AND_DESCRIPTIONS = 'welcome_survey_cluster_names_and_descriptions_v2.json'
+DATA = "welcome_survey_simple_v2.csv"
+
+CLUSTER_NAMES_AND_DESCRIPTIONS = "welcome_survey_cluster_names_and_descriptions_v2.json"
 
 
 @st.cache_data
 def get_model():
-    return load_model(MODEL_NAME)
+    return load_model(PATH / MODEL_NAME)
+
 
 @st.cache_data
 def get_cluster_names_and_descriptions():
-    with open(CLUSTER_NAMES_AND_DESCRIPTIONS, "r", encoding='utf-8') as f:
+    with open(PATH / CLUSTER_NAMES_AND_DESCRIPTIONS, "r", encoding="utf-8") as f:
         return json.loads(f.read())
+
 
 @st.cache_data
 def get_all_participants():
-    all_df = pd.read_csv(DATA, sep=';')
+    all_df = pd.read_csv(DATA, sep=";")
     df_with_clusters = predict_model(model, data=all_df)
 
     return df_with_clusters
 
+
 with st.sidebar:
     st.header("Powiedz nam coś o sobie")
     st.markdown("Pomożemy Ci znaleźć osoby, które mają podobne zainteresowania")
-    age = st.selectbox("Wiek", ['<18', '25-34', '45-54', '35-44', '18-24', '>=65', '55-64', 'unknown'])
-    edu_level = st.selectbox("Wykształcenie", ['Podstawowe', 'Średnie', 'Wyższe'])
-    fav_animals = st.selectbox("Ulubione zwierzęta", ['Brak ulubionych', 'Psy', 'Koty', 'Inne', 'Koty i Psy'])
-    fav_place = st.selectbox("Ulubione miejsce", ['Nad wodą', 'W lesie', 'W górach', 'Inne'])
-    gender = st.radio("Płeć", ['Mężczyzna', 'Kobieta'])
+    age = st.selectbox("Wiek", ["<18", "25-34", "45-54", "35-44", "18-24", ">=65", "55-64", "unknown"])
+    edu_level = st.selectbox("Wykształcenie", ["Podstawowe", "Średnie", "Wyższe"])
+    fav_animals = st.selectbox("Ulubione zwierzęta", ["Brak ulubionych", "Psy", "Koty", "Inne", "Koty i Psy"])
+    fav_place = st.selectbox("Ulubione miejsce", ["Nad wodą", "W lesie", "W górach", "Inne"])
+    gender = st.radio("Płeć", ["Mężczyzna", "Kobieta"])
 
-    person_df = pd.DataFrame([
-        {
-            'age': age,
-            'edu_level': edu_level,
-            'fav_animals': fav_animals,
-            'fav_place': fav_place,
-            'gender': gender,
-        }
-    ])
+    person_df = pd.DataFrame(
+        [
+            {
+                "age": age,
+                "edu_level": edu_level,
+                "fav_animals": fav_animals,
+                "fav_place": fav_place,
+                "gender": gender,
+            }
+        ]
+    )
 
 model = get_model()
 all_df = get_all_participants()
@@ -54,7 +63,7 @@ predicted_cluster_id = predict_model(model, data=person_df)["Cluster"].values[0]
 predicted_cluster_data = cluster_names_and_descriptions[predicted_cluster_id]
 
 st.header(f"Najbliżej Ci do grupy {predicted_cluster_data['name']}")
-st.markdown(predicted_cluster_data['description'])
+st.markdown(predicted_cluster_data["description"])
 same_cluster_df = all_df[all_df["Cluster"] == predicted_cluster_id]
 st.metric("Liczba twoich znajomych", len(same_cluster_df))
 
