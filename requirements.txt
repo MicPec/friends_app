@@ -1,4 +1,4 @@
-pycaret
 pandas
 streamlit
 plotly
+pycaret
